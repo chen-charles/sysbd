@@ -15,15 +15,15 @@ directory
 	project loop-through build script, ONE AND ONLY ONE for each project  
   * ./envir.py  
 	project loop-through environment, this is passed to every pybuild script for editing and passing global information, ONE AND ONLY ONE for each project  
+  * ./module.ini  
+	module specific configuration, most attention is needed for this config  
   * ./module.pybuild  
 	module specific pybuild script, mostly stable, no changes is needed unless you want to perform some specific tasks around the system  
 	**subdirectorie(s) MUST NOT contain another module**  
-  * ./module.ini  
-	module specific configuration, most attention is needed for this config  
 
 
   * ./sysbd.md  
-    this file
+    this file  
   * ./update_pybuild.py  
     simple utility to loop through PROJECTPATH for updating pybuild scripts (CHECK THE SCRIPT BEFORE YOU USE)  
   * ./sample.zip  
