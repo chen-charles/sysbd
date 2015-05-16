@@ -1,0 +1,100 @@
+# predefined: envir, sysbd
+
+import os
+import configparser
+
+DEBUG = envir.DEBUG
+if DEBUG:
+    RUN = print
+else:
+    RUN = sysbd.macro.launch
+
+LINKER = "linker"
+DEFAULT = "default"
+
+config = configparser.ConfigParser()
+config.read(fpath + os.sep + "module.ini")
+
+# compiling options
+comp = set(config.sections())
+comp.remove(DEFAULT)
+comp.remove(LINKER)
+
+
+class module(sysbd.module.Module):
+    all_target = dict()
+    def make(self):
+
+        for i in comp:
+            if "ext" not in i: self.all_target[i] = self.collect(i)
+            else: self.all_target[i] = self.collect(config[i]["ext"])
+
+        mkfh = set()
+        mkfdat = set()
+
+        for i in comp:
+            compiler = sysbd.compiler.Compiler(config[i]["compiler"], config[i]["flags"])
+            compilerMacro = "%s_COMPILER"%i
+            compilerFlagsMacro =  "%s_FLAGS"%i
+            mkfh.add(compiler.mkfstr(compilerMacro, compilerFlagsMacro))
+
+            for j in self.all_target[i][1].keys():
+                # j is fullname, self.all_target[i][1][j] is a str of files to be included
+                mkfdat.add  \
+                (
+                    "%s.o: %s\n\t"%(j, self.all_target[i][1][j])
+                    + "$(%s) $(%s) $< -o $@\n"%(compilerMacro, compilerFlagsMacro)
+                )
+
+        mkfall = " ".join([" ".join(i) for i in [self.all_target[i][0] for i in self.all_target.keys()]])
+
+        with open(fpath+os.sep+"Makefile", "w") as f:
+            f.write \
+            (
+                "\n".join(mkfh)
+                + "\nall: %s\n\n"%mkfall
+                + "\n".join(mkfdat)
+            )
+
+        RUN("make --file=%s"%(fpath+os.sep+"Makefile"))
+
+    def link(self, link):
+        link = set(link)
+
+        search = list()
+
+        final = dict()
+
+        indx = 0
+        while True:
+            if str(indx) in config[LINKER]:
+                search.append(config[LINKER][str(indx)])
+                final[indx] = ""
+                indx += 1
+            else:
+                break
+
+        for i in self.all_target.keys():
+            for j in self.all_target[i][0]:
+                if os.path.basename(j) in search:
+                    loc = search.index(os.path.basename(j))
+                    final[loc] = j
+                    search[loc] = None
+                else:
+                    link.add(j)
+
+        final[len(final)] = " ".join(link)
+
+        search = list(filter(None.__ne__, search))
+        if len(search) != 0: print("WARNING: unresolved linkage: %s"%" ".join(search))
+
+        RUN("%s %s %s"%(config[LINKER]["linker"], config[LINKER]["flags"], " ".join([final[i] for i in range(len(final))])))
+
+
+
+mod = module(config[DEFAULT]["name"], config[DEFAULT]["target"])
+mod.dependencies = set(filter(None, [i.strip() for i in config[DEFAULT]["dependencies"].strip().strip(";").split(";")]))
+mod.path = fpath
+
+envir.MODULEMAP[mod.name] = mod
+
