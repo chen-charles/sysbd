@@ -3,6 +3,8 @@ __author__ = 'Charles'
 import os
 from . import module
 
+MODULEBUILT = set()
+
 class Builder(object):
     def __init__(self, mod, solve_dependencies):
         if issubclass(mod.__class__, module.Module):
@@ -15,6 +17,7 @@ class Builder(object):
     link = set()
 
     def build(self):
+        if self.mod in MODULEBUILT: return
         while self.pending:
             i = self.pending.pop()
             try:
@@ -26,4 +29,5 @@ class Builder(object):
             self.link.add(i.path+os.sep+i.target)
 
         self.mod.build(self.link)
+        MODULEBUILT.add(self.mod)
 

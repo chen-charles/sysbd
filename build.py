@@ -19,8 +19,10 @@ try:
         with open(fullname) as f: exec(f.read(), {"envir": envir, "sysbd": sysbd, "fpath": os.path.dirname(fullname)})
 
     # you can always redefine the build behaviour
-    bdr = sysbd.builder.Builder(list(envir.MODULEMAP.values())[0], envir.solve_dependencies)
-    bdr.build()
+    for i in envir.MODULEMAP.values():
+        bdr = sysbd.builder.Builder(i, envir.solve_dependencies)
+        bdr.build()
+    sysbd.builder.MODULEBUILT.clear()
 
 except Exception as err:
     input("\n\nFailed.  \n%s\t%s\n"%(str(err), str(type(err))))
