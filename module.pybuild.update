@@ -23,7 +23,7 @@ comp.remove(LINKER)
 
 class module(sysbd.module.Module):
     all_target = dict()
-    def make(self):
+    def make(self, link):
 
         for i in comp:
             if "ext" not in i: self.all_target[i] = self.collect(i)
@@ -46,7 +46,17 @@ class module(sysbd.module.Module):
                     + "$(%s) $(%s) $< -o $@\n"%(compilerMacro, compilerFlagsMacro)
                 )
 
-        mkfall = " ".join([" ".join(i) for i in [self.all_target[i][0] for i in self.all_target.keys()]])
+        linker = sysbd.compiler.Linker(config[LINKER]["linker"], config[LINKER]["flags"])
+        mkfh.add(linker.mkfstr("LINKER", "LINKER_FLAGS"))
+        in_module_targets, link_final = self.link(link)
+        mkfdat.add \
+        (
+            "%s: %s\n\t" % (fpath+os.sep+config[DEFAULT]["target"], " ".join(in_module_targets))
+            + "$(LINKER) $(LINKER_FLAGS) $@ %s\n"%(link_final)
+        )
+
+        mkfall = " ".join([" ".join(i) for i in [self.all_target[i][0] for i in self.all_target.keys()]]) \
+            + fpath+os.sep+config[DEFAULT]["target"]
 
         with open(fpath+os.sep+"Makefile", "w") as f:
             f.write \
@@ -58,8 +68,7 @@ class module(sysbd.module.Module):
 
         RUN("make --file=%s"%(fpath+os.sep+"Makefile"))
 
-    def link(self, link):
-        link = set(link)
+    def link(self, link):   # link is a set()
 
         search = list()
 
@@ -74,8 +83,10 @@ class module(sysbd.module.Module):
             else:
                 break
 
+        in_module_targets = set()
         for i in self.all_target.keys():
             for j in self.all_target[i][0]:
+                in_module_targets.add(j)
                 if os.path.basename(j) in search:
                     loc = search.index(os.path.basename(j))
                     final[loc] = j
@@ -88,8 +99,9 @@ class module(sysbd.module.Module):
         search = list(filter(None.__ne__, search))
         if len(search) != 0: print("WARNING: unresolved linkage: %s"%" ".join(search))
 
-        RUN("%s %s %s"%(config[LINKER]["linker"], config[LINKER]["flags"], " ".join([final[i] for i in range(len(final))])))
+        return in_module_targets, " ".join([final[i] for i in range(len(final))])
 
+        # RUN("%s %s %s %s"%(config[LINKER]["linker"], config[LINKER]["flags"], config[DEFAULT]["target"], " ".join([final[i] for i in range(len(final))])))
 
 
 mod = module(config[DEFAULT]["name"], config[DEFAULT]["target"])
@@ -98,3 +110,4 @@ mod.path = fpath
 
 envir.MODULEMAP[mod.name] = mod
 
+print("Module:", mod.name)

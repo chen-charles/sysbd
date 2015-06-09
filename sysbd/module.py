@@ -26,13 +26,9 @@ class Module(object):
     def solve_dependencies(self, func): self.dependencies = set(map(func, self.dependencies))
 
     def build(self, link):
-        self.make()
-        self.link(link)
+        self.make(set(link))
 
-    def make(self):
-        pass
-
-    def link(self, link):
+    def make(self, link):
         pass
 
     def collect(self, ext, parse_inc_sep=os.sep, parse_inc_stat="#include"):

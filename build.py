@@ -5,6 +5,7 @@ try:
     import os
     import sysbd
     import envir
+    import traceback
 
     print("PROJECTPATH:", envir.PROJECTPATH)
 
@@ -15,7 +16,7 @@ try:
     # bdr.build(envir.solve_dependencies)
 
     for name, fullname, root in sysbd.macro.walk(envir.PROJECTPATH, "pybuild"):
-        print("pybuild found:", fullname)
+        print("pybuild found:", fullname, os.path.dirname(fullname))
         with open(fullname) as f: exec(f.read(), {"envir": envir, "sysbd": sysbd, "fpath": os.path.dirname(fullname)})
 
     # you can always redefine the build behaviour
@@ -25,7 +26,7 @@ try:
     sysbd.builder.MODULEBUILT.clear()
 
 except Exception as err:
-    input("\n\nFailed.  \n%s\t%s\n"%(str(err), str(type(err))))
+    input("\n\nFailed.  \n%s"%traceback.format_exc())
     exit(1)
 
 input("\n\nSucceeded.  \n")
