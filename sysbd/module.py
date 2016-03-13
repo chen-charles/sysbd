@@ -36,9 +36,9 @@ class Module(object):
         inc_data = dict()
         for name, fullname, root in macro.walk(self.path, ext):
             inc = ["%s "%fullname]
-            all_name.append(fullname[:-1-len(ext)]+".o")
+            all_name.append(fullname+".o")  #[:-1-len(ext)]
             for i in self.parse_include(root, name, os.sep): inc.append(i)
-            inc_data[fullname[:-1-len(ext)]] = (" ".join(inc))
+            inc_data[fullname] = (" ".join(inc))
 
         return all_name, inc_data
 

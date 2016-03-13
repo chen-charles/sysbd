@@ -12,7 +12,7 @@ else:
 LINKER = "linker"
 DEFAULT = "default"
 
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(interpolation=None)
 config.read(fpath + os.sep + "module.ini")
 
 # compiling options
@@ -34,6 +34,14 @@ class module(sysbd.module.Module):
 
         for i in comp:
             compiler = sysbd.compiler.Compiler(config[i]["compiler"], config[i]["flags"])
+            try:
+                print("using",
+                     (lambda compilerMacro, compilerFlagsMacro: eval(config[i]["format"]))("compilerMacro", "compilerFlagsMacro"),
+                     "for compiler", compiler.cmd)
+                compiler.mkcompstr = (lambda compilerMacro, compilerFlagsMacro: eval(config[i]["format"]))
+            except:
+                print("using default format for compiler", compiler.cmd)
+
             compilerMacro = "%s_COMPILER"%i
             compilerFlagsMacro =  "%s_FLAGS"%i
             mkfh.add(compiler.mkfstr(compilerMacro, compilerFlagsMacro))
@@ -43,7 +51,12 @@ class module(sysbd.module.Module):
                 mkfdat.add  \
                 (
                     "%s.o: %s\n\t"%(j, self.all_target[i][1][j])
-                    + "$(%s) $(%s) $< -o $@\n"%(compilerMacro, compilerFlagsMacro)
+                #    + "$(%s) $(%s) $< -o $@\n"%(compilerMacro, compilerFlagsMacro)
+                     + compiler.mkcompstr(compilerMacro, compilerFlagsMacro)
+                )
+                mkfdat.add  \
+                (
+                    "%s:;"%j
                 )
 
         linker = sysbd.compiler.Linker(config[LINKER]["linker"], config[LINKER]["flags"])
@@ -64,8 +77,6 @@ class module(sysbd.module.Module):
                 "\n".join(mkfh)
                 + "\nall: %s\n\n"%mkfall
                 + "\n".join(mkfdat)
-				+ "\n"
-				+ "clean: ;rm *.o \n"
             )
 
         RUN("make --file=%s"%(fpath+os.sep+"Makefile"))
