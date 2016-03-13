@@ -64,6 +64,8 @@ class module(sysbd.module.Module):
                 "\n".join(mkfh)
                 + "\nall: %s\n\n"%mkfall
                 + "\n".join(mkfdat)
+				+ "\n"
+				+ "clean: ;rm *.o \n"
             )
 
         RUN("make --file=%s"%(fpath+os.sep+"Makefile"))

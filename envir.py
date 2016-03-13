@@ -11,4 +11,4 @@ MODULEMAP = dict()
 solve_dependencies = lambda x: MODULEMAP[x]
 
 # if DEBUG, RUN = print
-DEBUG = True
+DEBUG = False
