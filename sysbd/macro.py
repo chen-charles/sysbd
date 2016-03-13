@@ -12,5 +12,5 @@ def walk(path, ext):
                 yield name, os.path.join(root, name), root
 
 def launch(command):
-    subproc = subprocess.Popen(command, stderr=subprocess.STDOUT)
+    subproc = subprocess.Popen(command, shell=True, stderr=subprocess.STDOUT)
     return subproc.wait()

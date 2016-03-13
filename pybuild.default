@@ -56,7 +56,7 @@ class module(sysbd.module.Module):
         )
 
         mkfall = " ".join([" ".join(i) for i in [self.all_target[i][0] for i in self.all_target.keys()]]) \
-            + fpath+os.sep+config[DEFAULT]["target"]
+            + " " + fpath+os.sep+config[DEFAULT]["target"]
 
         with open(fpath+os.sep+"Makefile", "w") as f:
             f.write \
