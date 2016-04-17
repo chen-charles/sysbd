@@ -18,13 +18,13 @@ config.read(fpath + os.sep + "module.ini")
 # compiling options
 comp = set(config.sections())
 comp.remove(DEFAULT)
-comp.remove(LINKER)
+if LINKER in comp: comp.remove(LINKER)
 
 
 class module(sysbd.module.Module):
     all_target = dict()
     def make(self, link):
-
+        print("Building for Module:", self.name)
         for i in comp:
             if "ext" not in i: self.all_target[i] = self.collect(i)
             else: self.all_target[i] = self.collect(config[i]["ext"])
@@ -59,14 +59,15 @@ class module(sysbd.module.Module):
                     "%s:;"%j
                 )
 
-        linker = sysbd.compiler.Linker(config[LINKER]["linker"], config[LINKER]["flags"])
-        mkfh.add(linker.mkfstr("LINKER", "LINKER_FLAGS"))
-        in_module_targets, link_final = self.link(link)
-        mkfdat.add \
-        (
-            "%s: %s\n\t" % (fpath+os.sep+config[DEFAULT]["target"], " ".join(in_module_targets))
-            + "$(LINKER) $(LINKER_FLAGS) $@ %s\n"%(link_final)
-        )
+        if LINKER in config.sections() and config[LINKER]["linker"].lower() != "null":
+            linker = sysbd.compiler.Linker(config[LINKER]["linker"], config[LINKER]["flags"])
+            mkfh.add(linker.mkfstr("LINKER", "LINKER_FLAGS"))
+            in_module_targets, link_final = self.link(link)
+            mkfdat.add \
+            (
+                "%s: %s\n\t" % (fpath+os.sep+config[DEFAULT]["target"], " ".join(in_module_targets))
+                + "$(LINKER) $(LINKER_FLAGS) $@ %s\n"%(link_final)
+            )
 
         mkfall = " ".join([" ".join(i) for i in [self.all_target[i][0] for i in self.all_target.keys()]]) \
             + " " + fpath+os.sep+config[DEFAULT]["target"]
@@ -79,7 +80,9 @@ class module(sysbd.module.Module):
                 + "\n".join(mkfdat)
             )
 
-        RUN("make --file=%s"%(fpath+os.sep+"Makefile"))
+        if int(RUN("make --file=%s"%(fpath+os.sep+"Makefile"))) == 2:
+            raise Exception("Module: "+self.name+" failed to build. ")
+        print("End Module:", self.name, end="\n\n")
 
     def link(self, link):   # link is a set()
 

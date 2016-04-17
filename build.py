@@ -48,7 +48,7 @@ try:
 	sysbd.builder.MODULEBUILT.clear()
 
 except Exception as err:
-	input("\n\nFailed.  \n%s"%traceback.format_exc())
+	input("\n\nFailed.  \n\n%s\n"%traceback.format_exc())
 	exit(1)
 
 input("\n\nSucceeded.  \n")
