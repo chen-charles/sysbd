@@ -119,6 +119,16 @@ class module(sysbd.module.Module):
 
         # RUN("%s %s %s %s"%(config[LINKER]["linker"], config[LINKER]["flags"], config[DEFAULT]["target"], " ".join([final[i] for i in range(len(final))])))
 
+    def collect(self, ext, parse_inc_sep=os.sep, parse_inc_stat="#include"):
+        all_name = list()
+        inc_data = dict()
+        for name, fullname, root in sysbd.directory.dwalkext(self.path, ext):
+            inc = ["%s "%fullname]
+            all_name.append(fullname+".o")  #[:-1-len(ext)]
+            for i in self.parse_include(root, name, os.sep): inc.append(i)
+            inc_data[fullname] = (" ".join(inc))
+
+        return all_name, inc_data
 
 mod = module(config[DEFAULT]["name"], config[DEFAULT]["target"])
 mod.dependencies = set(filter(None, [i.strip() for i in config[DEFAULT]["dependencies"].strip().strip(";").split(";")]))

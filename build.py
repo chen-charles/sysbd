@@ -51,6 +51,6 @@ except Exception as err:
 	input("\n\nFailed.  \n\n%s\n"%traceback.format_exc())
 	exit(1)
 
-input("\n\nSucceeded.  \n")
+print("\n\nSucceeded.  \n")
 
 
